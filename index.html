@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          document.cookie
+            .split("; ")
+            .find((v) => v.startsWith("calendar-theme="))
+            ?.split("=")[1] === "dark"
+            ? "dark"
+            : "light";
+      } catch {}
+    </script>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Find the current ISO or US calendar week number and week dates. Switch languages and view public holidays for Poland, the United States and Brazil."
+    />
+    <title>Current Calendar Week Number & Dates | calendar-week</title>
+    <style>
+      :root {
+        --paper: #f5f4ee;
+        --ink: #233b32;
+        --muted: #626e65;
+        --line: #d8ddd2;
+        --green: #dce8a8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          16px/1.5 "Segoe UI",
+          sans-serif;
+      }
+      button,
+      select,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button,
+      select {
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 15px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        background: #e6eadc;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #67873c;
+        outline-offset: 3px;
+      }
+      ::selection {
+        background: var(--green);
+      }
+      header {
+        max-width: 1200px;
+        margin: auto;
+        padding: 27px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+      .logo {
+        display: inline-grid;
+        place-items: center;
+        background: var(--ink);
+        color: var(--paper);
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        margin-right: 10px;
+        font-size: 19px;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .live {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .live:before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        background: #6b873b;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+      main {
+        max-width: 1200px;
+        margin: auto;
+        padding: 48px 32px 32px;
+      }
+      .intro {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 33px;
+      }
+      h1 {
+        font:
+          400 38px/1.15 Georgia,
+          serif;
+        margin: 0 0 9px;
+        letter-spacing: -1px;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .arrow {
+        font-size: 23px;
+        line-height: 24px;
+        padding: 9px 15px;
+      }
+      .week-panel {
+        background: #fffef9;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .week-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 27px 30px;
+        border-bottom: 1px solid var(--line);
+      }
+      .week-title {
+        display: flex;
+        align-items: center;
+        gap: 21px;
+      }
+      .number {
+        font:
+          400 88px/0.95 Georgia,
+          serif;
+        letter-spacing: -4px;
+      }
+      .week-label {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      h2 {
+        font-size: 19px;
+        font-weight: 600;
+        margin: 3px 0;
+      }
+      .tag {
+        font-size: 12px;
+        background: #e7edda;
+        border-radius: 5px;
+        padding: 5px 9px;
+        display: inline-block;
+      }
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        padding: 20px 18px;
+        gap: 7px;
+      }
+      .day {
+        min-height: 150px;
+        padding: 15px 13px;
+        border-radius: 8px;
+      }
+      .day.today {
+        background: var(--green);
+      }
+      .day.weekend {
+        background: #f0f0e9;
+      }
+      .day-name {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .date {
+        font-size: 32px;
+        line-height: 1.3;
+        margin-top: 14px;
+        font-variant-numeric: tabular-nums;
+      }
+      .day-note {
+        font-size: 11px;
+        margin-top: 16px;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 42px;
+        margin-top: 35px;
+      }
+      .metric {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin: 10px 0 13px;
+      }
+      .metric strong {
+        font:
+          48px/1 Georgia,
+          serif;
+        letter-spacing: -2px;
+      }
+      .metric span {
+        color: var(--muted);
+      }
+      .subheading {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .count-option {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 17px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      input[type="checkbox"] {
+        accent-color: var(--ink);
+        width: 17px;
+        height: 17px;
+      }
+      .track {
+        height: 9px;
+        border-radius: 9px;
+        background: #dfe3d6;
+        overflow: hidden;
+        margin: 20px 0 9px;
+      }
+      .fill {
+        height: 100%;
+        background: var(--ink);
+        transition: width 0.3s;
+      }
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .info {
+        margin-top: 34px;
+        border-top: 1px solid var(--line);
+        padding-top: 25px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+      .info div {
+        padding-right: 16px;
+      }
+      .info span {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .info strong {
+        font-size: 17px;
+        font-weight: 500;
+      }
+      .bottom {
+        margin-top: 36px;
+        background: #e9eddf;
+        padding: 21px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        border-radius: 9px;
+      }
+      .bottom p {
+        font-size: 13px;
+        max-width: 720px;
+      }
+      .bottom strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 30px;
+        gap: 20px;
+      }
+      a {
+        color: inherit;
+        text-underline-offset: 3px;
+      }
+      .date-picker {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .date-picker input {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 7px;
+        background: transparent;
+        max-width: 155px;
+      }
+      @media (max-width: 760px) {
+        header {
+          padding: 20px;
+        }
+        .header-right {
+          gap: 8px;
+        }
+        .live {
+          display: none;
+        }
+        main {
+          padding: 30px 20px;
+        }
+        .intro {
+          display: block;
+        }
+        h1 {
+          font-size: 32px;
+        }
+        nav {
+          margin-top: 24px;
+        }
+        .week-head {
+          padding: 22px 18px;
+          align-items: start;
+        }
+        .number {
+          font-size: 68px;
+        }
+        .week-title {
+          gap: 14px;
+        }
+        .week-head h2 {
+          font-size: 15px;
+        }
+        .calendar {
+          grid-template-columns: 1fr;
+          padding: 10px;
+          gap: 4px;
+        }
+        .day {
+          display: flex;
+          align-items: center;
+          min-height: 55px;
+          padding: 9px 13px;
+          gap: 20px;
+        }
+        .day-name {
+          width: 70px;
+        }
+        .date {
+          margin: 0;
+          font-size: 25px;
+          width: 36px;
+        }
+        .day-note {
+          margin: 0 0 0 auto;
+        }
+        .summary {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .info {
+          gap: 18px;
+          grid-template-columns: 1fr 1fr;
+        }
+        .bottom {
+          display: block;
+        }
+        .date-picker {
+          margin-top: 18px;
+        }
+        footer {
+          display: block;
+        }
+        footer span {
+          display: block;
+          margin-top: 7px;
+        }
+      }
+      .day.holiday {
+        background: #f7e7d9;
+      }
+      .day.holiday.today {
+        background: #dce8a8;
+      }
+      .holiday .day-note {
+        color: #7b3e20;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .header-right label {
+        font-size: 13px;
+      }
+      @media (max-width: 760px) {
+        header {
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .header-right {
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+        .header-right select {
+          padding: 6px;
+          max-width: 150px;
+        }
+        .holiday .day-note {
+          max-width: 150px;
+          text-align: right;
+        }
+      }
+      #year-calendar {
+        margin-top: 28px;
+        border-top: 1px solid var(--line);
+        padding-top: 20px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .year-choice {
+        display: block;
+        margin: 20px 0 10px;
+      }
+      .year-note {
+        font-size: 12px;
+        margin-bottom: 20px;
+      }
+      #months {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+      }
+      .month h3 {
+        font-size: 17px;
+        margin: 0 0 10px;
+      }
+      .month-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+      }
+      .month-grid span {
+        text-align: center;
+        font-size: 11px;
+        padding: 5px 0;
+      }
+      .month-grid button {
+        padding: 6px 0;
+        border: 0;
+        font-size: 13px;
+        border-radius: 5px;
+      }
+      .month-grid button.holiday-date {
+        background: #f7e7d9;
+        color: #7b3e20;
+        font-weight: 700;
+      }
+      .month-grid button.today-date {
+        outline: 2px solid var(--ink);
+        outline-offset: -2px;
+      }
+      .holiday-list {
+        list-style: none;
+        padding: 0;
+        margin: 12px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .holiday-list li {
+        margin: 4px 0;
+      }
+      @media (max-width: 760px) {
+        #months {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+      }
+      @media (max-width: 1050px) {
+        header {
+          flex-wrap: wrap;
+          gap: 18px;
+        }
+        .header-right {
+          flex-wrap: wrap;
+          gap: 14px;
+        }
+      }
+      .header-tools {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .page-menu {
+        gap: 20px;
+      }
+      .page-menu a {
+        text-decoration: none;
+        font-size: 14px;
+        padding: 8px 0;
+      }
+      .page-menu a[aria-current="page"] {
+        border-bottom: 2px solid var(--ink);
+        font-weight: 600;
+      }
+      .settings {
+        position: relative;
+      }
+      .settings > summary {
+        font-size: 14px;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .settings .header-right {
+        position: absolute;
+        right: 0;
+        top: 52px;
+        z-index: 10;
+        background: #fffef9;
+        padding: 20px;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 0 12px 28px #233b321c;
+      }
+      .settings label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      .settings select {
+        max-width: 200px;
+      }
+      #year-calendar {
+        margin-top: 0;
+        border: 0;
+        padding-top: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 760px) {
+        .header-tools {
+          width: 100%;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .page-menu {
+          margin-top: 0;
+          gap: 18px;
+        }
+        .settings .header-right {
+          min-width: 280px;
+        }
+        .page-menu a {
+          font-size: 13px;
+        }
+      }
+      html {
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
+      .page-menu a {
+        font-weight: 600;
+      }
+      .page-menu a[aria-current="page"] {
+        font-weight: 600;
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --paper: #0d1117;
+        --ink: #f0f6fc;
+        --muted: #9198a1;
+        --line: #3d444d;
+        --green: #1f6feb;
+      }
+      html[data-theme="dark"] .week-panel,
+      html[data-theme="dark"] .settings .header-right {
+        background: #161b22;
+      }
+      html[data-theme="dark"] .logo {
+        background: #f0f6fc;
+        color: #0d1117;
+      }
+      html[data-theme="dark"] button:hover {
+        background: #212830;
+      }
+      html[data-theme="dark"] .tag {
+        background: #212830;
+        color: #f0f6fc;
+      }
+      html[data-theme="dark"] .day.weekend {
+        background: #151b23;
+      }
+      html[data-theme="dark"] .day.holiday,
+      html[data-theme="dark"] .month-grid button.holiday-date {
+        background: #292417;
+        color: #e3b341;
+      }
+      html[data-theme="dark"] .holiday .day-note {
+        color: #e3b341;
+      }
+      html[data-theme="dark"] .day.today,
+      html[data-theme="dark"] .day.holiday.today {
+        background: #1f6feb;
+        color: #ffffff;
+      }
+      html[data-theme="dark"] .day.today .day-name {
+        color: #ffffff;
+      }
+      html[data-theme="dark"] ::selection {
+        background: #264f78;
+        color: #fff;
+      }
+      html[data-theme="dark"] select {
+        background: #161b22;
+      }
+      html[data-theme="dark"] .page-menu a[aria-current="page"] {
+        border-color: #4493f8;
+        color: #4493f8;
+      }
+      html[data-theme="dark"] .month-grid button.today-date {
+        outline-color: #4493f8;
+      }
+      html[data-theme="dark"] button:focus-visible,
+      html[data-theme="dark"] select:focus-visible {
+        outline-color: #4493f8;
+      }
+    </style>
+    <link
+      rel="canonical"
+      href="https://pauloremoli.github.io/calendar-week/"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#0d1117" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="calendar-week" />
+    <meta
+      property="og:title"
+      content="Current Calendar Week Number & Dates | calendar-week"
+    />
+    <meta
+      property="og:description"
+      content="Find the current ISO or US calendar week number and week dates. Switch languages and view public holidays for Poland, the United States and Brazil."
+    />
+    <meta
+      property="og:url"
+      content="https://pauloremoli.github.io/calendar-week/"
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Current Calendar Week Number & Dates | calendar-week"
+    />
+    <meta
+      name="twitter:description"
+      content="Find the current ISO or US calendar week number and week dates. Switch languages and view public holidays for Poland, the United States and Brazil."
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Current Calendar Week Number & Dates | calendar-week",
+        "description": "Find the current ISO or US calendar week number and week dates. Switch languages and view public holidays for Poland, the United States and Brazil.",
+        "url": "https://pauloremoli.github.io/calendar-week/",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "calendar-week",
+          "url": "https://pauloremoli.github.io/calendar-week/"
+        },
+        "inLanguage": ["en", "pl", "pt-BR"]
+      }
+    </script>
+  </head>
+  <body>
+    <noscript
+      ><p>
+        calendar-week shows week numbers and holiday calendars for Poland, the
+        United States and Brazil. Enable JavaScript to use the interactive
+        calendars.
+      </p></noscript
+    >
+    <header>
+      <div class="brand">
+        <span class="logo" aria-hidden="true">w</span>calendar-week
+      </div>
+      <div class="header-tools">
+        <nav class="page-menu" aria-label="Pages">
+          <a href="./" data-i18n="weekPage">Calendar week</a
+          ><a href="./holidays/" data-i18n="holidayPage">Holidays</a>
+        </nav>
+        <details class="settings">
+          <summary data-i18n="settings">Settings</summary>
+          <div class="header-right">
+            <label
+              ><span data-i18n="appearance">Appearance:</span
+              ><select id="theme" aria-label="Appearance">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select></label
+            ><label
+              ><span data-i18n="weeks">Weeks:</span>
+              <select id="week-system" aria-label="Week numbering">
+                <option value="iso">ISO · Monday</option>
+                <option value="us">US · Sunday</option>
+              </select></label
+            ><label
+              ><span data-i18n="holidays">Holidays:</span>
+              <select id="country" aria-label="Public holiday country">
+                <option value="PL">Poland</option>
+                <option value="BR">Brazil</option>
+                <option value="US">United States (federal)</option>
+                <option value="none">None</option>
+              </select></label
+            ><label
+              ><span data-i18n="language">Language:</span>
+              <select id="locale" aria-label="Date locale">
+                <option value="en-GB">English</option>
+                <option value="pl-PL">Polski</option>
+                <option value="pt-BR">Português</option>
+              </select></label
+            >
+          </div>
+        </details>
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <div><h1 data-i18n="heading">What week is it?</h1></div>
+        <nav class="week-navigation" aria-label="Week navigation">
+          <button class="arrow" id="prev" aria-label="Previous week">‹</button
+          ><button id="current">This week</button
+          ><button class="arrow" id="next" aria-label="Next week">›</button>
+        </nav>
+      </section>
+      <section
+        class="week-panel"
+        aria-label="Selected calendar week"
+        aria-live="polite"
+      >
+        <div class="week-head">
+          <div class="week-title">
+            <div class="number" id="week"></div>
+            <div>
+              <div class="week-label" id="iso"></div>
+              <h2 id="range"></h2>
+            </div>
+          </div>
+          <span class="tag" id="status"></span>
+        </div>
+        <div class="calendar" id="calendar"></div>
+      </section>
+      <section id="year-calendar" hidden>
+        <h1 data-i18n="holidayPage">Holidays</h1>
+        <label class="year-choice"
+          ><span data-i18n="year">Year</span>
+          <select id="year" aria-label="Calendar year"></select
+        ></label>
+        <div id="months"></div>
+      </section>
+      <footer>
+        <span><span id="holiday-note"></span></span>
+      </footer>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

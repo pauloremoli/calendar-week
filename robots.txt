@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://pauloremoli.github.io/calendar-week/sitemap.xml
