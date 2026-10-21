@@ -605,9 +605,8 @@ $("country").onchange = () => {
   renderYear();
 };
 $("week-system").onchange = () => {
-  const anchor = add(start, 3);
   weekSystem = $("week-system").value;
-  start = weekStart(anchor);
+  start = weekStart(new Date());
   savePreference("weekday-system", weekSystem);
   render();
   renderYear();
@@ -619,7 +618,7 @@ setInterval(render, 30000);
 // Browsers may restore form controls after the initial script, including on Back.
 // Reapply saved preferences to both controls and calendar after that restoration.
 window.addEventListener("pageshow", () => {
-  const anchor = add(start, 3);
+  const previousSystem = weekSystem;
   weekSystem = loadPreference("weekday-system", ["iso", "us"], "iso");
   locale = loadPreference(
     "weekday-locale",
@@ -633,7 +632,7 @@ window.addEventListener("pageshow", () => {
   $("country").value = country;
   $("theme").value = theme;
   document.documentElement.dataset.theme = theme;
-  start = weekStart(anchor);
+  if (weekSystem !== previousSystem) start = weekStart(new Date());
   render();
   renderYear();
 });
